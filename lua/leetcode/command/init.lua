@@ -336,25 +336,36 @@ function cmd.last_submit()
     end
 
     local question_api = require("leetcode.api.question")
-    question_api.latest_submission(q.q.id, q.lang, function(res, err) --
-        if err then
-            if err.status == 404 then
-                log.error("You haven't submitted any code!")
-            else
-                log.err(err)
+
+    languages_for_me = { "ruby", "kotlin", "javascript", "typescript" }
+    for _, lang in ipairs(languages_for_me) do
+        question_api.latest_submission(q.q.id, lang, function(res, err) --
+            if err then
+                if err.status == 404 then
+                    log.error("You haven't submitted any code!")
+                else
+                    log.err(err)
+                end
+
+                return
             end
 
-            return
-        end
+            if type(res) == "table" and res.code then
+                if q.lang ~= lang then
+                    log.info("Last submission found for " .. lang .. ". Change language first.")
+                    --- Changing language is asynchronous. So without a rewrite,
+                    --- simply ask the user to change language themselves.
+                    return
+                end
 
-        if type(res) == "table" and res.code then
-            ---@type string
-            local lines = res.code
-            q:editor_section_replace(lines, "code")
-        else
-            log.error("Something went wrong")
-        end
-    end)
+                ---@type string
+                local lines = res.code
+                q:editor_section_replace(lines, "code")
+            else
+                log.error("Something went wrong")
+            end
+        end)
+    end
 end
 
 function cmd.restore()
