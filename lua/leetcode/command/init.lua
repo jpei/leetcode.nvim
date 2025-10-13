@@ -341,9 +341,7 @@ function cmd.last_submit()
     for _, lang in ipairs(languages_for_me) do
         question_api.latest_submission(q.q.id, lang, function(res, err) --
             if err then
-                if err.status == 404 then
-                    log.error("You haven't submitted any code!")
-                else
+                if err.status ~= 404 then
                     log.err(err)
                 end
 
