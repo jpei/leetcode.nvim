@@ -292,27 +292,40 @@ end
 
 function cmd.open()
     local utils = require("leetcode.utils")
+    local problems = require("leetcode.api.problems")
+
     utils.auth_guard()
     local q = utils.curr_question()
 
     if q then
-        if vim.ui.open then
-            vim.ui.open(q.cache.link)
-        else
-            local command
-            local os_name = vim.loop.os_uname().sysname
-
-            if os_name == "Linux" then
-                command = string.format("xdg-open '%s'", q.cache.link)
-            elseif os_name == "Darwin" then
-                command = string.format("open '%s'", q.cache.link)
-            else
-                -- Fallback to Windows if uname is not available or does not match Linux/Darwin.
-                command = string.format("start \"\" \"%s\"", q.cache.link)
+        problems.question_of_today(function(qot, err)
+            if err then
+                return log.err(err)
             end
 
-            vim.fn.jobstart(command, { detach = true })
-        end
+            local link = q.cache.link
+            if qot.title_slug == q.title_slug then
+              link = string.format("%s?envType=daily-question", link)
+            end
+
+            if vim.ui.open then
+                vim.ui.open(link)
+            else
+                local command
+                local os_name = vim.loop.os_uname().sysname
+
+                if os_name == "Linux" then
+                    command = string.format("xdg-open '%s'", link)
+                elseif os_name == "Darwin" then
+                    command = string.format("open '%s'", link)
+                else
+                    -- Fallback to Windows if uname is not available or does not match Linux/Darwin.
+                    command = string.format("start \"\" \"%s\"", link)
+                end
+
+                vim.fn.jobstart(command, { detach = true })
+            end
+        end)
     end
 end
 
